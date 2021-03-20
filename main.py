@@ -34,6 +34,6 @@ if response.ok:
     print(price_including_tax)
     print(number_available)
     #print(product_description)
-    print(poetry)
+    print(category)
     print(review_rating)
     print(image_url)
