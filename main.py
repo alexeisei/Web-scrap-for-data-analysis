@@ -21,10 +21,10 @@ if response.ok:
     price_including_tax = infos[3].text
     number_available = infos[5].text
     # product_description = soup.find(id="content_inner")
-    cat = soup.ul.findAll("li")
+    cat = soup.ul.findAll('li')
     category = cat[2].text.strip()
-    review_rating = soup.find("p", class_="star-rating")["class"][1]
-    image_url = soup.img["src"].replace("..", "")
+    review_rating = soup.find('p', class_='star-rating')['class'][1]
+    image_url = soup.img['src'].replace('..', '')
 
 
 
