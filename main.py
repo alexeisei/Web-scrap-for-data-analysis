@@ -27,7 +27,7 @@ if response.ok:
 
     df = pandas.DataFrame([info_list], columns=['upc', 'title', 'price_excluding_tax', 'price_including_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url'])
 
-    df.to_csv('résultats.csv', index=False)
+    df.to_csv('résultats.csv', index=False, sep=';')
 
 
 
