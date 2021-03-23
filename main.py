@@ -3,6 +3,22 @@ from bs4 import BeautifulSoup
 import csv
 import pandas
 
+#extraction des urls pour les livres d'1 catégorie
+
+url_cat = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html"
+response = requests.get(url_cat)
+if response.ok:
+    soup = BeautifulSoup(response.content.decode("utf-8", "ignore"), features="html.parser")
+
+    books_links = []
+    containers = soup.find_all('div', class_='image_container')
+    for container in containers:
+        links = container.find('a', href=True)['href'][9:]
+        books_links.append('https://books.toscrape.com/catalogue/' + links)
+        print(books_links)
+
+
+
 #extraction des éléments d'un livre
 
 url = "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
