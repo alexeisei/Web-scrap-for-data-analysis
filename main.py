@@ -8,56 +8,61 @@ url = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/index
 response = requests.get(url)
 if response.ok:
     soup = BeautifulSoup(response.content.decode("utf-8", "ignore"), features="html.parser")
-
     list_books = []
-
     containers = soup.find_all('article', class_='product_pod')
     for container in containers:
         list_books.append('https://books.toscrape.com/catalogue/' + container.find('a', href=True)['href'][9:])
 
-#extraction des urls en itérant sur l'ensemble des pages de la catégorie
+#extraction en itérant sur l'ensemble des pages de la catégorie
 
-    i = 2
-    next_page = url.replace('index', 'page-2')
-    while requests.get(next_page).ok:
+    next_page = soup.find('li', class_='next')
+    while next_page:
+        if 'index.html' in url:
+            url = url.replace('index.html', next_page.find('a')['href'])
+        elif 'page-' in url:
+            url = url[:-6].replace('page', next_page.find('a')['href'])
+        if url[-1] == "-":
+            url = url[:len(url) - 1]
 
-        response = requests.get(next_page)
-        soup = BeautifulSoup(response.content, features="html.parser")
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content.decode("utf-8", 'ignore'), features='html.parser')
+        next_pages = ['https://books.toscrape.com/catalogue/' + book.find('a', href=True)['href'][9:] for book in
+                      soup.find_all('div', class_='image_container')]
+        for pages in next_pages:
+            list_books.append(pages)
+            next_page = soup.find('li', class_='next')
 
-        for product_pod in soup.find_all('article', class_='product_pod'):
-            list_books.append('https://books.toscrape.com/catalogue/' + container.find('a', href=True)['href'][9:])
-
-        i += 1
-        page = "page-" + str(i)
-        next_page = url.replace('index', page)
-
-print(len(list_books))
+            print(list_books)
 
 
-"""
 #extraction des éléments d'un livre
 
-url = "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
-response = requests.get(url)
-if response.ok:
-    soup = BeautifulSoup(response.content.decode("utf-8", "ignore"), features="html.parser")
+for url in list_books:
+    response = requests.get(url)
+    if response.ok:
+        soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
 
-    upc = soup.tr.td.text
-    #upc2 = soup.th.next_sibling.text
-    title = soup.find('h1').text
-    infos = soup.findAll('td')
-    price_excluding_tax = infos[2].text[1:]
-    price_including_tax = infos[3].text[1:]
-    number_available = infos[5].text
-    product_description = soup.find('meta', {'name': 'description'})['content'].strip()
-    cat = soup.ul.findAll('li')
-    category = cat[2].text.strip()
-    review_rating = soup.find('p', class_='star-rating')['class'][1]
-    image_url = 'https://books.toscrape.com/' + soup.img['src'].replace('..', (''))
+        upc = soup.tr.td.text
+        title = soup.find('h1').text
+        infos = soup.findAll('td')
+        price_excluding_tax = infos[2].text[1:]
+        price_including_tax = infos[3].text[1:]
+        number_available = infos[5].text
+        product_description = soup.find_all('p')
+        product_description = product_description[3].text
+        category = soup.ul.find_all('li')
+        category = category[2].text.strip()
+        review_rating = soup.find('p', class_='star-rating')['class'][1]
+        image_url = 'https://books.toscrape.com/' + soup.img['src'].replace('..', (''))
 
-    info_list = [upc, title, price_excluding_tax, price_including_tax, number_available, product_description, category, review_rating, image_url]
+        info_list = [image_url, category, title, upc, price_excluding_tax, price_including_tax, number_available,
+                     product_description, review_rating]
 
-    df = pandas.DataFrame([info_list], columns=['upc', 'title', 'price_excluding_tax', 'price_including_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url'])
+        print(info_list)
 
-    df.to_csv('résultats.csv', index=False, sep=';')
-"""
+
+df = pandas.DataFrame([info_list], columns=['image_url', 'category', 'title', 'upc', 'price_excluding_tax', 'price_including_tax', 'number_available', 'product_description', 'review_rating'])
+
+df.to_csv('résultats.csv', index=False, sep=';')
+
+
