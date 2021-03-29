@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas
+from urllib.request import urlretrieve
+import os
 
 #extraction des urls pour les livres d'1 catégorie sur première page
 
@@ -23,6 +25,8 @@ if response.ok:
             url = url[:-6].replace('page', next_page.find('a')['href'])
         if url[-1] == "-":
             url = url[:len(url) - 1]
+        else:
+            pass
 
         response = requests.get(url)
         soup = BeautifulSoup(response.content.decode("utf-8", 'ignore'), features='html.parser')
@@ -32,37 +36,87 @@ if response.ok:
             list_books.append(pages)
             next_page = soup.find('li', class_='next')
 
-            print(list_books)
+#contrôle des urls récupérées
+print(len(list_books))
+print(list_books)
 
 
-#extraction des éléments d'un livre
+#extraction des éléments de chacun des livres de la catégorie et alimentation des listes afin de créer la base de données pour export csv
+
+product_page_urls = []
+upcs = []
+titles = []
+prices_excluding_tax = []
+prices_including_tax = []
+numbers_available = []
+product_descriptions = []
+categories = []
+reviews_rating = []
+images = []
 
 for url in list_books:
     response = requests.get(url)
     if response.ok:
         soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
 
+        product_page_url = str(url)
+        product_page_urls.append(product_page_url)
+        print(product_page_url)
+
         upc = soup.tr.td.text
+        upcs.append(upc)
+
         title = soup.find('h1').text
+        titles.append(title)
+
         infos = soup.findAll('td')
+
         price_excluding_tax = infos[2].text[1:]
+        prices_excluding_tax.append(price_excluding_tax)
+
         price_including_tax = infos[3].text[1:]
+        prices_including_tax.append(price_including_tax)
+
         number_available = infos[5].text
+        numbers_available.append(number_available)
+
         product_description = soup.find_all('p')
         product_description = product_description[3].text
+        product_descriptions.append(product_description)
+
         category = soup.ul.find_all('li')
         category = category[2].text.strip()
+        categories.append(category)
+
         review_rating = soup.find('p', class_='star-rating')['class'][1]
+        reviews_rating.append(review_rating)
+
         image_url = 'https://books.toscrape.com/' + soup.img['src'].replace('..', (''))
+        images.append(image_url)
 
-        info_list = [image_url, category, title, upc, price_excluding_tax, price_including_tax, number_available,
-                     product_description, review_rating]
+        data_to_extract = {
+            'Category': categories,
+            'Universal Product Code': upcs,
+            'Title': titles,
+            'Product Page Url': product_page_urls,
+            'Product Description': product_descriptions,
+            'Price Excluding Tax': prices_excluding_tax,
+            'Price Including Tax': prices_including_tax,
+            'Review Rating': reviews_rating,
+            'Number Available': numbers_available,
+            'Image Url': images
+        }
+        
+#Création de la DataFrame Pandas et export du fichier avec les résultats
 
-        print(info_list)
+df = pandas.DataFrame(data=data_to_extract)
+df.to_csv('Résultats.csv', index=False, sep=';')
 
 
-df = pandas.DataFrame([info_list], columns=['image_url', 'category', 'title', 'upc', 'price_excluding_tax', 'price_including_tax', 'number_available', 'product_description', 'review_rating'])
+#téléchargement des images dans un dossier
 
-df.to_csv('résultats.csv', index=False, sep=';')
+os.mkdir('./Couvertures/')
 
+for url in images:
+    urlretrieve(url, './Couvertures/' + os.path.basename(url))
 
