@@ -4,6 +4,20 @@ import pandas
 from urllib.request import urlretrieve
 import os
 
+#Extraction des urls des différentes catégories sur la page principale
+url = 'http://books.toscrape.com/index.html'
+response = requests.get(url)
+if response.ok:
+    soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
+    list_categories = []
+    containers = soup.find(class_='nav nav-list').find_all('a')[1:]
+    for container in containers:
+        link_to_extract = container['href'][0:51]
+        cat_link = 'https://books.toscrape.com/' + link_to_extract
+        list_categories.append(cat_link)
+    print(len(list_categories))
+    print(list_categories)
+
 #extraction des urls pour les livres d'1 catégorie sur première page
 
 url = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html"
@@ -16,7 +30,6 @@ if response.ok:
         list_books.append('https://books.toscrape.com/catalogue/' + container.find('a', href=True)['href'][9:])
 
 #extraction en itérant sur l'ensemble des pages de la catégorie
-
     next_page = soup.find('li', class_='next')
     while next_page:
         if 'index.html' in url:
