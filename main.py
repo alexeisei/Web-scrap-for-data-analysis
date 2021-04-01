@@ -46,7 +46,8 @@ for url in list_categories:
                 all_books.append(pages)
                 next_page = soup.find('li', class_='next')
 
-# extraction des éléments de chacun des livres de la catégorie et alimentation des listes afin de créer la base de données pour export csv
+# extraction des éléments de chacun des livres de la catégorie et alimentation des listes afin de créer
+# la base de données pour export csv
 product_page_urls = []
 upcs = []
 titles = []
@@ -101,9 +102,14 @@ for url in all_books:
             'Image Url': images
         }
 
-# Création de la DataFrame Pandas et export du fichier avec les résultats
+# création de la DataFrame, et export des données splittées par catégorie
+os.mkdir('./Données extraites/')
+path = './Données extraites/'
 df = pandas.DataFrame(data=data_to_extract)
-df.to_csv('Résultats.csv', index=False, sep=';')
+df_by_cat = df.groupby("Category")
+for (category, category_df) in df_by_cat:
+    filename = category + ".csv"
+    category_df.to_csv(path + filename, index=False, sep=';')
 
 # téléchargement des images dans un dossier
 os.mkdir('./Couvertures/')
