@@ -9,7 +9,7 @@ list_categories = []
 url = 'http://books.toscrape.com/index.html'
 response = requests.get(url)
 if response.ok:
-    soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
+    soup = BeautifulSoup(response.content, features='html.parser')
     containers = soup.find(class_='nav nav-list').find_all('a')[1:]
     for container in containers:
         link_to_extract = container['href']
@@ -21,7 +21,7 @@ all_books = []
 for url in list_categories:
     response = requests.get(url)
     if response.ok:
-        soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
+        soup = BeautifulSoup(response.content, features='html.parser')
         containers = soup.find_all('article', class_='product_pod')
         for container in containers:
             all_books.append('https://books.toscrape.com/catalogue/' + container.find('a', href=True)['href'][9:])
@@ -39,7 +39,7 @@ for url in list_categories:
                 pass
 
             response = requests.get(url)
-            soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
+            soup = BeautifulSoup(response.content, features='html.parser')
             next_pages = ['https://books.toscrape.com/catalogue/' + book.find('a', href=True)['href'][9:] for book in
                           soup.find_all('div', class_='image_container')]
             for pages in next_pages:
@@ -62,19 +62,17 @@ images = []
 for url in all_books:
     response = requests.get(url)
     if response.ok:
-        soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), features='html.parser')
-
+        soup = BeautifulSoup(response.content, features='html.parser')
         product_page_url = str(url)
         product_page_urls.append(product_page_url)
         upc = soup.tr.td.text
         upcs.append(upc)
         title = soup.find('h1').text
         titles.append(title)
-
         infos = soup.findAll('td')
-        price_excluding_tax = infos[2].text[1:]
+        price_excluding_tax = infos[2].text
         prices_excluding_tax.append(price_excluding_tax)
-        price_including_tax = infos[3].text[1:]
+        price_including_tax = infos[3].text
         prices_including_tax.append(price_including_tax)
         number_available = infos[5].text
         numbers_available.append(number_available)
@@ -109,7 +107,7 @@ df = pandas.DataFrame(data=data_to_extract)
 df_by_cat = df.groupby("Category")
 for (category, category_df) in df_by_cat:
     filename = category + ".csv"
-    category_df.to_csv(path + filename, index=False, sep=';')
+    category_df.to_csv(path + filename, index=False,  sep=';', encoding='utf-8-sig')
 
 # téléchargement des images dans un dossier
 os.mkdir('./Couvertures/')
